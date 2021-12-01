@@ -1,10 +1,7 @@
 package fr.delcey.mvctomvvm.data.pokemon
 
-import android.os.Parcelable
 import com.google.gson.annotations.SerializedName
-import kotlinx.android.parcel.Parcelize
 
-@Parcelize
 data class Versions(
 
     @field:SerializedName("generation-iii")
@@ -30,4 +27,4 @@ data class Versions(
 
     @field:SerializedName("generation-vi")
     val generationVi: GenerationVi? = null
-) : Parcelable
+)

@@ -1,10 +1,7 @@
 package fr.delcey.mvctomvvm.data.pokemon
 
-import android.os.Parcelable
 import com.google.gson.annotations.SerializedName
-import kotlinx.android.parcel.Parcelize
 
-@Parcelize
 data class DiamondPearl(
 
     @field:SerializedName("back_shiny_female")
@@ -30,4 +27,4 @@ data class DiamondPearl(
 
     @field:SerializedName("front_shiny")
     val frontShiny: String? = null
-) : Parcelable
+)

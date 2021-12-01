@@ -1,10 +1,7 @@
 package fr.delcey.mvctomvvm.data.pokemon
 
-import android.os.Parcelable
 import com.google.gson.annotations.SerializedName
-import kotlinx.android.parcel.Parcelize
 
-@Parcelize
 data class AbilitiesItem(
 
     @field:SerializedName("is_hidden")
@@ -15,4 +12,4 @@ data class AbilitiesItem(
 
     @field:SerializedName("slot")
     val slot: Int? = null
-) : Parcelable
+)

@@ -1,12 +1,7 @@
 package fr.delcey.mvctomvvm.data.pokemon
 
-import android.os.Parcelable
 import com.google.gson.annotations.SerializedName
-import kotlinx.android.parcel.Parcelize
 
-// TODO This class is HUGE and needs to be Parcelable !
-//  Thanks to the Parcelize plugin, this reduces boilerplate but this class would be awful to make parcelable without it !
-@Parcelize
 data class PokemonResponse(
 
     @field:SerializedName("location_area_encounters")
@@ -59,5 +54,4 @@ data class PokemonResponse(
 
     @field:SerializedName("order")
     val order: Int? = null
-) : Parcelable {
-}
+)
