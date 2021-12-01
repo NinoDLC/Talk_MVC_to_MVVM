@@ -7,16 +7,16 @@ import android.view.ViewGroup
 import android.widget.ImageView
 import android.widget.TextView
 import androidx.cardview.widget.CardView
+import androidx.core.content.ContextCompat
 import androidx.core.view.isVisible
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
 import fr.delcey.mvctomvvm.R
-import fr.delcey.mvctomvvm.data.pokemon.PokemonResponse
 
-class PokemonAdapter(private val listener: (PokemonResponse) -> Unit) :
-    ListAdapter<PokemonResponse, PokemonAdapter.PokemonViewHolder>(PokemonDiffCallback()) {
+class PokemonAdapter(private val listener: (String) -> Unit) :
+    ListAdapter<PokemonViewState, PokemonAdapter.PokemonViewHolder>(PokemonDiffCallback()) {
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int) = PokemonViewHolder(
         LayoutInflater.from(parent.context).inflate(R.layout.pokemon_itemview, parent, false)
     )
@@ -33,42 +33,32 @@ class PokemonAdapter(private val listener: (PokemonResponse) -> Unit) :
         private val pokemonType1TextView = itemView.findViewById<TextView>(R.id.pokemon_itemview_tv_type1)
         private val pokemonType2TextView = itemView.findViewById<TextView>(R.id.pokemon_itemview_tv_type2)
 
-        fun bind(pokemonResponse: PokemonResponse, listener: (PokemonResponse) -> Unit) {
+        fun bind(pokemonViewState: PokemonViewState, listener: (String) -> Unit) {
             Glide.with(pokemonImageView)
-                .load(pokemonResponse.sprites?.frontDefault)
+                .load(pokemonViewState.imageUrl)
                 .fitCenter()
                 .into(pokemonImageView)
 
-            pokemonNameTextView.text = pokemonResponse.getDetailedName()
+            pokemonNameTextView.text = pokemonViewState.name
 
-            // TODO Intelligence on the Adapter : can't be tested
-            val firstType = pokemonResponse.types?.firstOrNull {
-                it?.slot == 1
-            }?.type
-            pokemonType1TextView.isVisible = firstType != null
-            if (firstType != null) {
-                pokemonType1TextView.text = firstType.name
-                pokemonType1TextView.backgroundTintList = ColorStateList.valueOf(firstType.getColorInt())
+            pokemonType1TextView.text = pokemonViewState.type1Name
+            pokemonType1TextView.backgroundTintList = ColorStateList.valueOf(
+                ContextCompat.getColor(itemView.context, pokemonViewState.type1Color)
+            )
+
+            pokemonType2TextView.text = pokemonViewState.type2Name
+            pokemonType2TextView.backgroundTintList = pokemonViewState.type2Color?.let {
+                ColorStateList.valueOf(ContextCompat.getColor(itemView.context, it))
             }
+            pokemonType2TextView.isVisible = pokemonViewState.isType2Visible
 
-            // TODO Should be refactored but it doesn't makes much sense, the refactored function would be, for example :
-            //  updatePokemonChip(pokemonResponse, 2, pokemonType2TextView)
-            val secondType = pokemonResponse.types?.firstOrNull {
-                it?.slot == 2
-            }?.type
-            pokemonType2TextView.isVisible = secondType != null
-            if (secondType != null) {
-                pokemonType2TextView.text = secondType.name
-                pokemonType2TextView.backgroundTintList = ColorStateList.valueOf(secondType.getColorInt())
-            }
-
-            pokemonCardView.setOnClickListener { listener(pokemonResponse) }
+            pokemonCardView.setOnClickListener { listener(pokemonViewState.id) }
         }
     }
 
-    private class PokemonDiffCallback : DiffUtil.ItemCallback<PokemonResponse>() {
-        override fun areItemsTheSame(oldItem: PokemonResponse, newItem: PokemonResponse) = oldItem.id == newItem.id
+    private class PokemonDiffCallback : DiffUtil.ItemCallback<PokemonViewState>() {
+        override fun areItemsTheSame(oldItem: PokemonViewState, newItem: PokemonViewState) = oldItem.id == newItem.id
 
-        override fun areContentsTheSame(oldItem: PokemonResponse, newItem: PokemonResponse) = oldItem == newItem
+        override fun areContentsTheSame(oldItem: PokemonViewState, newItem: PokemonViewState) = oldItem == newItem
     }
 }
