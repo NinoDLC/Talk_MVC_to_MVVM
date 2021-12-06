@@ -1,5 +1,5 @@
 # Comment utiliser ce repository
-Il y a plusieurs tags git que tu peux checkout, représentant les différentes étapes du refactoring d'une app MVC en MVVM + Flow : 
+Il y a plusieurs **tags git** que tu peux checkout, représentant les différentes étapes du refactoring d'une app MVC en MVVM + Flow : 
  * `MVC` ([Github Web IDE](https://github.dev/NinoDLC/Talk_MVC_to_MVVM/commit/MVC))-> Un truc pas très robuste, pas très testable, pas très performant, pas très évolutif
  * `MVVM` ([Github Web IDE](https://github.dev/NinoDLC/Talk_MVC_to_MVVM/commit/MVVM)) -> Refacto en MVVM terminé (en [LiveData](https://medium.com/androiddevelopers/viewmodels-and-livedata-patterns-antipatterns-21efaef74a54))
  * `flows` ([Github Web IDE](https://github.dev/NinoDLC/Talk_MVC_to_MVVM/commit/flows)) -> Ajout des Flows pour une meilleure gestion des Threads ([entre](https://kotlinlang.org/docs/flow.html) [autres](https://developer.android.com/kotlin/flow) !)
