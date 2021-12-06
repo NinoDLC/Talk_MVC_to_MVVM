@@ -4,16 +4,21 @@ import androidx.lifecycle.LiveData
 import androidx.lifecycle.MediatorLiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.asLiveData
 import dagger.hilt.android.lifecycle.HiltViewModel
 import fr.delcey.mvctomvvm.data.PokemonRepository
 import fr.delcey.mvctomvvm.data.pokemon.PokemonResponse
 import fr.delcey.mvctomvvm.ui.PokemonUtils
+import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import javax.inject.Inject
 
+@ExperimentalCoroutinesApi
 @HiltViewModel
 class PokemonListViewModel @Inject constructor(
     pokemonRepository: PokemonRepository,
-    private val pokemonUtils: PokemonUtils
+    private val pokemonUtils: PokemonUtils,
+    ioDispatcher: CoroutineDispatcher
 ) : ViewModel() {
 
     private val pokemonViewStatesMediatorLiveData = MediatorLiveData<List<PokemonViewState>>()
@@ -21,7 +26,7 @@ class PokemonListViewModel @Inject constructor(
     private val userQueryMutableLiveData = MutableLiveData<String>()
 
     init {
-        val pokemonResponsesLiveData = pokemonRepository.getPokemonsLiveData()
+        val pokemonResponsesLiveData = pokemonRepository.getPokemonsFlow().asLiveData(ioDispatcher)
 
         pokemonViewStatesMediatorLiveData.addSource(pokemonResponsesLiveData) { responses: List<PokemonResponse> ->
             combine(responses, userQueryMutableLiveData.value)

@@ -1,7 +1,6 @@
 package fr.delcey.mvctomvvm.ui.list
 
 import androidx.arch.core.executor.testing.InstantTaskExecutorRule
-import androidx.lifecycle.MutableLiveData
 import fr.delcey.mvctomvvm.R
 import fr.delcey.mvctomvvm.data.PokemonRepository
 import fr.delcey.mvctomvvm.data.pokemon.PokemonResponse
@@ -9,12 +8,15 @@ import fr.delcey.mvctomvvm.data.pokemon.Sprites
 import fr.delcey.mvctomvvm.data.pokemon.Type
 import fr.delcey.mvctomvvm.data.pokemon.TypesItem
 import fr.delcey.mvctomvvm.ui.PokemonUtils
+import fr.delcey.mvctomvvm.utils.TestCoroutineRule
 import fr.delcey.mvctomvvm.utils.getValueForTesting
 import io.mockk.clearAllMocks
 import io.mockk.confirmVerified
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.verify
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.flowOf
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
@@ -22,6 +24,7 @@ import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 
+@ExperimentalCoroutinesApi
 class PokemonListViewModelTest {
 
     companion object {
@@ -37,24 +40,16 @@ class PokemonListViewModelTest {
     @get:Rule
     val instantTaskExecutorRule = InstantTaskExecutorRule()
 
-    private val pokemonResponsesMutableLiveData = MutableLiveData<List<PokemonResponse>>()
+    @get:Rule
+    val testCoroutineRule = TestCoroutineRule()
 
     private val pokemonRepository = mockk<PokemonRepository>()
-
-    private lateinit var viewModel: PokemonListViewModel
 
     @Before
     fun setUp() {
         clearAllMocks()
 
-        pokemonResponsesMutableLiveData.value = getDefaultPokemonResponses()
-        every { pokemonRepository.getPokemonsLiveData() } returns pokemonResponsesMutableLiveData
-
-        viewModel = PokemonListViewModel(pokemonRepository, PokemonUtils())
-
-        verify(exactly = 1) {
-            pokemonRepository.getPokemonsLiveData()
-        }
+        every { pokemonRepository.getPokemonsFlow() } returns flowOf(getDefaultPokemonResponses())
     }
 
     @After
@@ -65,7 +60,7 @@ class PokemonListViewModelTest {
     @Test
     fun `nominal case`() {
         // When
-        val result: List<PokemonViewState> = viewModel.getPokemonListLiveData().getValueForTesting()
+        val result: List<PokemonViewState> = getViewModel().getPokemonListLiveData().getValueForTesting()
 
         // Then
         assertEquals(
@@ -77,10 +72,10 @@ class PokemonListViewModelTest {
     @Test
     fun `initial case - 0 responses`() {
         // Given
-        pokemonResponsesMutableLiveData.value = emptyList()
+        pokemonResponsesFlow.value = emptyList()
 
         // When
-        val result: List<PokemonViewState> = viewModel.getPokemonListLiveData().getValueForTesting()
+        val result: List<PokemonViewState> = getViewModel().getPokemonListLiveData().getValueForTesting()
 
         // Then
         assertTrue(result.isEmpty())
@@ -93,7 +88,7 @@ class PokemonListViewModelTest {
         viewModel.onSearchChanged("DEFAULT_POKEMON_RESPONSE_NAME_0")
 
         // When
-        val result: List<PokemonViewState> = viewModel.getPokemonListLiveData().getValueForTesting()
+        val result: List<PokemonViewState> = getViewModel().getPokemonListLiveData().getValueForTesting()
 
         // Then
         assertEquals(
@@ -105,7 +100,7 @@ class PokemonListViewModelTest {
     @Test
     fun `error case - user search is a perfect match for first item but name is null`() {
         // Given
-        pokemonResponsesMutableLiveData.value = getDefaultPokemonResponses(
+        pokemonResponsesFlow.value = getDefaultPokemonResponses(
             firstPokemonResponse = getDefaultPokemonResponse(0).copy(
                 name = null
             )
@@ -113,7 +108,7 @@ class PokemonListViewModelTest {
         viewModel.onSearchChanged("DEFAULT_POKEMON_RESPONSE_NAME_0")
 
         // When
-        val result: List<PokemonViewState> = viewModel.getPokemonListLiveData().getValueForTesting()
+        val result: List<PokemonViewState> = getViewModel().getPokemonListLiveData().getValueForTesting()
 
         // Then
         assertTrue(result.isEmpty())
@@ -122,7 +117,7 @@ class PokemonListViewModelTest {
     @Test
     fun `error case - user search is a perfect match for first item but name is empty`() {
         // Given
-        pokemonResponsesMutableLiveData.value = getDefaultPokemonResponses(
+        pokemonResponsesFlow.value = getDefaultPokemonResponses(
             firstPokemonResponse = getDefaultPokemonResponse(0).copy(
                 name = ""
             )
@@ -130,7 +125,7 @@ class PokemonListViewModelTest {
         viewModel.onSearchChanged("DEFAULT_POKEMON_RESPONSE_NAME_0")
 
         // When
-        val result: List<PokemonViewState> = viewModel.getPokemonListLiveData().getValueForTesting()
+        val result: List<PokemonViewState> = getViewModel().getPokemonListLiveData().getValueForTesting()
 
         // Then
         assertTrue(result.isEmpty())
@@ -142,7 +137,7 @@ class PokemonListViewModelTest {
         viewModel.onSearchChanged("DEFAULT_POKEMON_RESPONSE_NAME_1")
 
         // When
-        val result: List<PokemonViewState> = viewModel.getPokemonListLiveData().getValueForTesting()
+        val result: List<PokemonViewState> = getViewModel().getPokemonListLiveData().getValueForTesting()
 
         // Then
         assertEquals(
@@ -157,7 +152,7 @@ class PokemonListViewModelTest {
         viewModel.onSearchChanged("default_pokemon_response_name_1")
 
         // When
-        val result: List<PokemonViewState> = viewModel.getPokemonListLiveData().getValueForTesting()
+        val result: List<PokemonViewState> = getViewModel().getPokemonListLiveData().getValueForTesting()
 
         // Then
         assertEquals(
@@ -172,7 +167,7 @@ class PokemonListViewModelTest {
         viewModel.onSearchChanged("DEFAULT_POKEMON_RESPONSE_NAME_2")
 
         // When
-        val result: List<PokemonViewState> = viewModel.getPokemonListLiveData().getValueForTesting()
+        val result: List<PokemonViewState> = getViewModel().getPokemonListLiveData().getValueForTesting()
 
         // Then
         assertEquals(
@@ -187,7 +182,7 @@ class PokemonListViewModelTest {
         viewModel.onSearchChanged("POKEMON_RESPONSE_NAME")
 
         // When
-        val result: List<PokemonViewState> = viewModel.getPokemonListLiveData().getValueForTesting()
+        val result: List<PokemonViewState> = getViewModel().getPokemonListLiveData().getValueForTesting()
 
         // Then
         assertEquals(
@@ -202,7 +197,7 @@ class PokemonListViewModelTest {
         viewModel.onSearchChanged("pokemon_response_name")
 
         // When
-        val result: List<PokemonViewState> = viewModel.getPokemonListLiveData().getValueForTesting()
+        val result: List<PokemonViewState> = getViewModel().getPokemonListLiveData().getValueForTesting()
 
         // Then
         assertEquals(
@@ -217,7 +212,7 @@ class PokemonListViewModelTest {
         viewModel.onSearchChanged("0")
 
         // When
-        val result: List<PokemonViewState> = viewModel.getPokemonListLiveData().getValueForTesting()
+        val result: List<PokemonViewState> = getViewModel().getPokemonListLiveData().getValueForTesting()
 
         // Then
         assertEquals(
@@ -232,7 +227,7 @@ class PokemonListViewModelTest {
         viewModel.onSearchChanged("1")
 
         // When
-        val result: List<PokemonViewState> = viewModel.getPokemonListLiveData().getValueForTesting()
+        val result: List<PokemonViewState> = getViewModel().getPokemonListLiveData().getValueForTesting()
 
         // Then
         assertEquals(
@@ -247,7 +242,7 @@ class PokemonListViewModelTest {
         viewModel.onSearchChanged("2")
 
         // When
-        val result: List<PokemonViewState> = viewModel.getPokemonListLiveData().getValueForTesting()
+        val result: List<PokemonViewState> = getViewModel().getPokemonListLiveData().getValueForTesting()
 
         // Then
         assertEquals(
@@ -262,7 +257,7 @@ class PokemonListViewModelTest {
         viewModel.onSearchChanged("unknown pokemon")
 
         // When
-        val result: List<PokemonViewState> = viewModel.getPokemonListLiveData().getValueForTesting()
+        val result: List<PokemonViewState> = getViewModel().getPokemonListLiveData().getValueForTesting()
 
         // Then
         assertTrue(result.isEmpty())
@@ -272,14 +267,14 @@ class PokemonListViewModelTest {
     @Test
     fun `nominal case - pokemon name must have a # and be capitalized`() {
         // Given
-        pokemonResponsesMutableLiveData.value = getDefaultPokemonResponses(
+        pokemonResponsesFlow.value = getDefaultPokemonResponses(
             secondPokemonResponse = getDefaultPokemonResponse(1).copy(
                 name = "mimitoss"
             )
         )
 
         // When
-        val result: List<PokemonViewState> = viewModel.getPokemonListLiveData().getValueForTesting()
+        val result: List<PokemonViewState> = getViewModel().getPokemonListLiveData().getValueForTesting()
 
         // Then
         assertEquals(
@@ -295,14 +290,14 @@ class PokemonListViewModelTest {
     @Test
     fun `error case - don't display a pokemon without id`() {
         // Given
-        pokemonResponsesMutableLiveData.value = getDefaultPokemonResponses(
+        pokemonResponsesFlow.value = getDefaultPokemonResponses(
             secondPokemonResponse = getDefaultPokemonResponse(1).copy(
                 id = null
             )
         )
 
         // When
-        val result: List<PokemonViewState> = viewModel.getPokemonListLiveData().getValueForTesting()
+        val result: List<PokemonViewState> = getViewModel().getPokemonListLiveData().getValueForTesting()
 
         // Then
         assertEquals(
@@ -316,14 +311,14 @@ class PokemonListViewModelTest {
     @Test
     fun `error case - don't display a pokemon without name`() {
         // Given
-        pokemonResponsesMutableLiveData.value = getDefaultPokemonResponses(
+        pokemonResponsesFlow.value = getDefaultPokemonResponses(
             secondPokemonResponse = getDefaultPokemonResponse(1).copy(
                 name = null
             )
         )
 
         // When
-        val result: List<PokemonViewState> = viewModel.getPokemonListLiveData().getValueForTesting()
+        val result: List<PokemonViewState> = getViewModel().getPokemonListLiveData().getValueForTesting()
 
         // Then
         assertEquals(
@@ -337,14 +332,14 @@ class PokemonListViewModelTest {
     @Test
     fun `error case - don't display a pokemon without types`() {
         // Given
-        pokemonResponsesMutableLiveData.value = getDefaultPokemonResponses(
+        pokemonResponsesFlow.value = getDefaultPokemonResponses(
             secondPokemonResponse = getDefaultPokemonResponse(1).copy(
                 types = null
             )
         )
 
         // When
-        val result: List<PokemonViewState> = viewModel.getPokemonListLiveData().getValueForTesting()
+        val result: List<PokemonViewState> = getViewModel().getPokemonListLiveData().getValueForTesting()
 
         // Then
         assertEquals(
@@ -358,14 +353,14 @@ class PokemonListViewModelTest {
     @Test
     fun `error case - don't display a pokemon with empty types`() {
         // Given
-        pokemonResponsesMutableLiveData.value = getDefaultPokemonResponses(
+        pokemonResponsesFlow.value = getDefaultPokemonResponses(
             secondPokemonResponse = getDefaultPokemonResponse(1).copy(
                 types = emptyList()
             )
         )
 
         // When
-        val result: List<PokemonViewState> = viewModel.getPokemonListLiveData().getValueForTesting()
+        val result: List<PokemonViewState> = getViewModel().getPokemonListLiveData().getValueForTesting()
 
         // Then
         assertEquals(
@@ -380,7 +375,7 @@ class PokemonListViewModelTest {
     @Test
     fun `error case - don't display a pokemon with unknown slot for type 1`() {
         // Given
-        pokemonResponsesMutableLiveData.value = getDefaultPokemonResponses(
+        pokemonResponsesFlow.value = getDefaultPokemonResponses(
             secondPokemonResponse = getDefaultPokemonResponse(1).copy(
                 types = getDefaultTypesItems(
                     firstTypeItem = getDefaultTypesItem(1).copy(
@@ -391,7 +386,7 @@ class PokemonListViewModelTest {
         )
 
         // When
-        val result: List<PokemonViewState> = viewModel.getPokemonListLiveData().getValueForTesting()
+        val result: List<PokemonViewState> = getViewModel().getPokemonListLiveData().getValueForTesting()
 
         // Then
         assertEquals(
@@ -405,7 +400,7 @@ class PokemonListViewModelTest {
     @Test
     fun `error case - don't display a pokemon with null slot for type 1`() {
         // Given
-        pokemonResponsesMutableLiveData.value = getDefaultPokemonResponses(
+        pokemonResponsesFlow.value = getDefaultPokemonResponses(
             secondPokemonResponse = getDefaultPokemonResponse(1).copy(
                 types = getDefaultTypesItems(
                     firstTypeItem = getDefaultTypesItem(1).copy(
@@ -416,7 +411,7 @@ class PokemonListViewModelTest {
         )
 
         // When
-        val result: List<PokemonViewState> = viewModel.getPokemonListLiveData().getValueForTesting()
+        val result: List<PokemonViewState> = getViewModel().getPokemonListLiveData().getValueForTesting()
 
         // Then
         assertEquals(
@@ -430,7 +425,7 @@ class PokemonListViewModelTest {
     @Test
     fun `error case - don't display a pokemon with null type 1`() {
         // Given
-        pokemonResponsesMutableLiveData.value = getDefaultPokemonResponses(
+        pokemonResponsesFlow.value = getDefaultPokemonResponses(
             secondPokemonResponse = getDefaultPokemonResponse(1).copy(
                 types = getDefaultTypesItems(
                     firstTypeItem = getDefaultTypesItem(1).copy(
@@ -441,7 +436,7 @@ class PokemonListViewModelTest {
         )
 
         // When
-        val result: List<PokemonViewState> = viewModel.getPokemonListLiveData().getValueForTesting()
+        val result: List<PokemonViewState> = getViewModel().getPokemonListLiveData().getValueForTesting()
 
         // Then
         assertEquals(
@@ -455,7 +450,7 @@ class PokemonListViewModelTest {
     @Test
     fun `error case - don't display a pokemon with null name for type 1`() {
         // Given
-        pokemonResponsesMutableLiveData.value = getDefaultPokemonResponses(
+        pokemonResponsesFlow.value = getDefaultPokemonResponses(
             secondPokemonResponse = getDefaultPokemonResponse(1).copy(
                 types = getDefaultTypesItems(
                     firstTypeItem = getDefaultTypesItem(1).copy(
@@ -468,7 +463,7 @@ class PokemonListViewModelTest {
         )
 
         // When
-        val result: List<PokemonViewState> = viewModel.getPokemonListLiveData().getValueForTesting()
+        val result: List<PokemonViewState> = getViewModel().getPokemonListLiveData().getValueForTesting()
 
         // Then
         assertEquals(
@@ -482,7 +477,7 @@ class PokemonListViewModelTest {
     @Test
     fun `error case - don't display a pokemon without a type 1 color`() {
         // Given
-        pokemonResponsesMutableLiveData.value = getDefaultPokemonResponses(
+        pokemonResponsesFlow.value = getDefaultPokemonResponses(
             secondPokemonResponse = getDefaultPokemonResponse(1).copy(
                 types = getDefaultTypesItems(
                     firstTypeItem = getDefaultTypesItem(1).copy(
@@ -495,7 +490,7 @@ class PokemonListViewModelTest {
         )
 
         // When
-        val result: List<PokemonViewState> = viewModel.getPokemonListLiveData().getValueForTesting()
+        val result: List<PokemonViewState> = getViewModel().getPokemonListLiveData().getValueForTesting()
 
         // Then
         assertEquals(
@@ -511,7 +506,7 @@ class PokemonListViewModelTest {
     @Test
     fun `nominal case - a pokemon can have an null type 2`() {
         // Given
-        pokemonResponsesMutableLiveData.value = getDefaultPokemonResponses(
+        pokemonResponsesFlow.value = getDefaultPokemonResponses(
             secondPokemonResponse = getDefaultPokemonResponse(1).copy(
                 types = getDefaultTypesItems(
                     secondTypeItem = null
@@ -520,7 +515,7 @@ class PokemonListViewModelTest {
         )
 
         // When
-        val result: List<PokemonViewState> = viewModel.getPokemonListLiveData().getValueForTesting()
+        val result: List<PokemonViewState> = getViewModel().getPokemonListLiveData().getValueForTesting()
 
         // Then
         assertEquals(
@@ -538,7 +533,7 @@ class PokemonListViewModelTest {
     @Test
     fun `nominal case - a pokemon can have an unknown slot for type 2`() {
         // Given
-        pokemonResponsesMutableLiveData.value = getDefaultPokemonResponses(
+        pokemonResponsesFlow.value = getDefaultPokemonResponses(
             secondPokemonResponse = getDefaultPokemonResponse(1).copy(
                 types = getDefaultTypesItems(
                     secondTypeItem = getDefaultTypesItem(2).copy(
@@ -549,7 +544,7 @@ class PokemonListViewModelTest {
         )
 
         // When
-        val result: List<PokemonViewState> = viewModel.getPokemonListLiveData().getValueForTesting()
+        val result: List<PokemonViewState> = getViewModel().getPokemonListLiveData().getValueForTesting()
 
         // Then
         assertEquals(
@@ -567,7 +562,7 @@ class PokemonListViewModelTest {
     @Test
     fun `nominal case - a pokemon can have a null slot for type 2`() {
         // Given
-        pokemonResponsesMutableLiveData.value = getDefaultPokemonResponses(
+        pokemonResponsesFlow.value = getDefaultPokemonResponses(
             secondPokemonResponse = getDefaultPokemonResponse(1).copy(
                 types = getDefaultTypesItems(
                     secondTypeItem = getDefaultTypesItem(2).copy(
@@ -578,7 +573,7 @@ class PokemonListViewModelTest {
         )
 
         // When
-        val result: List<PokemonViewState> = viewModel.getPokemonListLiveData().getValueForTesting()
+        val result: List<PokemonViewState> = getViewModel().getPokemonListLiveData().getValueForTesting()
 
         // Then
         assertEquals(
@@ -596,7 +591,7 @@ class PokemonListViewModelTest {
     @Test
     fun `nominal case - a pokemon can have a null type 2`() {
         // Given
-        pokemonResponsesMutableLiveData.value = getDefaultPokemonResponses(
+        pokemonResponsesFlow.value = getDefaultPokemonResponses(
             secondPokemonResponse = getDefaultPokemonResponse(1).copy(
                 types = getDefaultTypesItems(
                     secondTypeItem = getDefaultTypesItem(2).copy(
@@ -607,7 +602,7 @@ class PokemonListViewModelTest {
         )
 
         // When
-        val result: List<PokemonViewState> = viewModel.getPokemonListLiveData().getValueForTesting()
+        val result: List<PokemonViewState> = getViewModel().getPokemonListLiveData().getValueForTesting()
 
         // Then
         assertEquals(
@@ -625,7 +620,7 @@ class PokemonListViewModelTest {
     @Test
     fun `nominal case - a pokemon can have a null name for type 2`() {
         // Given
-        pokemonResponsesMutableLiveData.value = getDefaultPokemonResponses(
+        pokemonResponsesFlow.value = getDefaultPokemonResponses(
             secondPokemonResponse = getDefaultPokemonResponse(1).copy(
                 types = getDefaultTypesItems(
                     secondTypeItem = getDefaultTypesItem(2).copy(
@@ -638,7 +633,7 @@ class PokemonListViewModelTest {
         )
 
         // When
-        val result: List<PokemonViewState> = viewModel.getPokemonListLiveData().getValueForTesting()
+        val result: List<PokemonViewState> = getViewModel().getPokemonListLiveData().getValueForTesting()
 
         // Then
         assertEquals(
@@ -656,7 +651,7 @@ class PokemonListViewModelTest {
     @Test
     fun `nominal case - a pokemon can have an unknown type 2 color`() {
         // Given
-        pokemonResponsesMutableLiveData.value = getDefaultPokemonResponses(
+        pokemonResponsesFlow.value = getDefaultPokemonResponses(
             secondPokemonResponse = getDefaultPokemonResponse(1).copy(
                 types = getDefaultTypesItems(
                     secondTypeItem = getDefaultTypesItem(2).copy(
@@ -669,7 +664,7 @@ class PokemonListViewModelTest {
         )
 
         // When
-        val result: List<PokemonViewState> = viewModel.getPokemonListLiveData().getValueForTesting()
+        val result: List<PokemonViewState> = getViewModel().getPokemonListLiveData().getValueForTesting()
 
         // Then
         assertEquals(
@@ -688,14 +683,14 @@ class PokemonListViewModelTest {
     @Test
     fun `error case - don't display a pokemon without an image url (sprites node is null)`() {
         // Given
-        pokemonResponsesMutableLiveData.value = getDefaultPokemonResponses(
+        pokemonResponsesFlow.value = getDefaultPokemonResponses(
             secondPokemonResponse = getDefaultPokemonResponse(1).copy(
                 sprites = null
             )
         )
 
         // When
-        val result: List<PokemonViewState> = viewModel.getPokemonListLiveData().getValueForTesting()
+        val result: List<PokemonViewState> = getViewModel().getPokemonListLiveData().getValueForTesting()
 
         // Then
         assertEquals(
@@ -709,7 +704,7 @@ class PokemonListViewModelTest {
     @Test
     fun `error case - don't display a pokemon without an image url (front default is null)`() {
         // Given
-        pokemonResponsesMutableLiveData.value = getDefaultPokemonResponses(
+        pokemonResponsesFlow.value = getDefaultPokemonResponses(
             secondPokemonResponse = getDefaultPokemonResponse(1).copy(
                 sprites = getDefaultSprites(0).copy(
                     frontDefault = null
@@ -718,7 +713,7 @@ class PokemonListViewModelTest {
         )
 
         // When
-        val result: List<PokemonViewState> = viewModel.getPokemonListLiveData().getValueForTesting()
+        val result: List<PokemonViewState> = getViewModel().getPokemonListLiveData().getValueForTesting()
 
         // Then
         assertEquals(
@@ -770,6 +765,18 @@ class PokemonListViewModelTest {
         else -> null
     }
     // endregion IN
+
+    private fun getViewModel(): PokemonListViewModel {
+        return PokemonListViewModel(
+            pokemonRepository = pokemonRepository,
+            pokemonUtils = PokemonUtils(),
+            ioDispatcher = testCoroutineRule.testCoroutineDispatcher
+        ).also {
+            verify(exactly = 1) {
+                pokemonRepository.getPokemonsFlow()
+            }
+        }
+    }
 
     // region OUT
     private fun getDefaultPokemonViewStates(

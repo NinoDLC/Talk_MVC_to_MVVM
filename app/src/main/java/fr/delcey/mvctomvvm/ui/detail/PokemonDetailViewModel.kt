@@ -5,27 +5,32 @@ import androidx.lifecycle.MediatorLiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.Transformations
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.asLiveData
 import dagger.hilt.android.lifecycle.HiltViewModel
 import fr.delcey.mvctomvvm.data.PokemonRepository
 import fr.delcey.mvctomvvm.ui.PokemonUtils
+import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import javax.inject.Inject
 
+@ExperimentalCoroutinesApi
 @HiltViewModel
 class PokemonDetailViewModel @Inject constructor(
     pokemonRepository: PokemonRepository,
-    pokemonUtils: PokemonUtils
+    pokemonUtils: PokemonUtils,
+    ioDispatcher: CoroutineDispatcher
 ) : ViewModel() {
 
     private val pokemonIdMutableLiveData = MutableLiveData<String>()
     private val pokemonResponseLiveData = Transformations.switchMap(pokemonIdMutableLiveData) { id ->
-        pokemonRepository.getPokemonByIdLiveData(id)
+        pokemonRepository.getPokemonByIdFlow(id).asLiveData(ioDispatcher)
     }
 
     private val pokemonDetailViewStateMediatorLiveData = MediatorLiveData<PokemonDetailViewState>()
 
     init {
         pokemonDetailViewStateMediatorLiveData.addSource(pokemonResponseLiveData) { pokemonResponse ->
-            val number = pokemonResponse.id?.toString() ?: return@addSource
+            val number = pokemonResponse?.id?.toString() ?: return@addSource
 
             val type1: String = pokemonUtils.getType(pokemonResponse.types, 1)?: return@addSource
             val type2: String? = pokemonUtils.getType(pokemonResponse.types, 2)
